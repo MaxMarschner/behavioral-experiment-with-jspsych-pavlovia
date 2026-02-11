@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>JointCardGame_Imit_Match</title>
+        
+        <script src="lib/vendors/jspsych-7.1.2/jspsych.js"></script>
+        <script src="lib/vendors/jspsych-7.1.2/plugin-html-keyboard-response.js"></script>
+        <script src="lib/vendors/jspsych-7.1.2/plugin-image-keyboard-response.js"></script>
+        <script src="lib/vendors/jspsych-7.1.2/plugin-fullscreen.js"></script>
+        <script src="lib/vendors/jspsych-7.1.2/plugin-call-function.js"></script>
+        <script src="lib/vendors/jspsych-7.1.2/plugin-preload.js"></script>
+        <script src="lib/vendors/jspsych-7.1.2/plugin-external-html.js"></script>
+        
+        <link rel="stylesheet" href="lib/vendors/jspsych-7.1.2/jspsych.css">
+
+        <script type="text/javascript" src="lib/vendors/jquery-2.2.0.min.js"></script>
+        <script type="text/javascript" src="jspsych-7-pavlovia-2021.12.js"></script>
+
+        <script src="imitation_trials_blocked_info.js"></script> 
+
+
+        <style>
+            .trial_grid {
+                display: grid;
+                grid-template-columns: 23% 2% 9% 2% 9% 10% 9% 2% 9% 10% 15%;
+                grid-template-rows: 10% 10% 60% 10% 10%;
+                width: 80vw;
+                height: 80vh;
+            }  
+            .header_row {
+                grid-column: 1 / 12;
+                grid-row: 1;
+                align-self: center;
+                text-align: center;
+                color: white;
+                font-size: 1.5vw;
+                font-weight: bold;
+            }
+            .person_left {
+                grid-column: 3 / 6;
+                grid-row: 4;
+                align-self: center;
+                color: white;
+                font-size: 1.5vw;
+            }  
+            .person_right {
+                grid-column: 7 / 10;
+                grid-row: 4;
+                align-self: center;
+                color: white;
+                font-size: 1.5vw;
+            }   
+            .card_one {
+                grid-column: 3 / 4;
+                grid-row: 3;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .card_two {
+                grid-column: 5 / 6;
+                grid-row: 3;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .card_three {
+                grid-column: 7 / 8;
+                grid-row: 3;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .card_four {
+                grid-column: 9 / 10;
+                grid-row: 3;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .feedback {
+                grid-column: 6 / 7;
+                grid-row: 3;
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                font-size: 100%;
+                font-weight: bold;
+                white-space: nowrap;
+            }
+            .last_row {
+                grid-column: 6 / 11;
+                grid-row: 5;
+                align-self: center;
+                color: white;
+                font-size: 100%;
+                white-space: nowrap;
+            }
+            .instructions{
+                grid-column: 1 / 2;
+                grid-row: 2 / 6;
+                text-align: left;
+                color: white;
+                font-size: 1.2vw;
+            }
+            .message {
+                font-size:1.5vw;
+                color:white;
+                text-align: center;
+            }
+            .card_one img,
+            .card_two img,
+            .card_three img,
+            .card_four img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+                margin-bottom: 0;
+            }
+            
+
+        </style>
+
+    </head>
+
+    <body>
+        <style>
+            #display_stage {
+                position: fixed;
+                left: 0vw;
+                top: 0vh;
+                width: 100vw;
+                height: 100vh;
+                background-image: url('Stimuli/Background.jpg');
+            }
+
+        </style>
+
+        <div id='display_stage'></div>
+
+    </body>
+
+    <script>
+
+        // initialize jsPsych
+        var jsPsych = initJsPsych({
+            display_element: 'display_stage',
+        });
+
+        // capture info from Prolific
+        var subject_id = jsPsych.data.getURLVariable('PROLIFIC_PID');
+        var study_id = jsPsych.data.getURLVariable('STUDY_ID');
+        var session_id = jsPsych.data.getURLVariable('SESSION_ID');
+
+        jsPsych.data.addProperties({
+            subject_id: subject_id,
+            study_id: study_id,
+            session_id: session_id,
+            expName: 'CardsSidebySide',
+            expCondition: 'imitation',
+        });
+
+        // initialize timeline variable
+        var timeline = [];
+
+        // init connection with pavlovia.org
+        var pavlovia_init = {
+			type: jsPsychPavlovia,
+			command: "init"
+		};
+		timeline.push(pavlovia_init);
+
+        // display consent form
+        var consent_form = {
+            type: jsPsychExternalHtml,
+            url: "consentForm.html",
+            cont_btn: "start",
+            check_fn: function(elem){
+                if (document.getElementById('consent_checkbox').checked) {
+                    return true;
+                }
+                else {
+                    alert("If you wish to participate, you must check the box next to the statement 'I agree to participate in this study.'");
+                    return false;
+                }
+                return false;
+            }
+        };
+        timeline.push(consent_form);
+
+        // preload stimuli
+        var preload = {
+            type: jsPsychPreload,
+            images: [
+                'Stimuli/2_of_clubs.png',
+                'Stimuli/3_of_clubs.png',
+                'Stimuli/4_of_clubs.png',
+                'Stimuli/5_of_clubs.png',
+                'Stimuli/6_of_clubs.png',
+                'Stimuli/7_of_clubs.png',
+                'Stimuli/8_of_clubs.png',
+                'Stimuli/9_of_clubs.png',
+                'Stimuli/2_of_clubs_choice.png',
+                'Stimuli/3_of_clubs_choice.png',
+                'Stimuli/4_of_clubs_choice.png',
+                'Stimuli/5_of_clubs_choice.png',
+                'Stimuli/6_of_clubs_choice.png',
+                'Stimuli/7_of_clubs_choice.png',
+                'Stimuli/8_of_clubs_choice.png',
+                'Stimuli/9_of_clubs_choice.png',
+                'Stimuli/backcard.png'
+                ]
+        };
+
+        timeline.push(preload);
+
+        timeline.push({
+            type: jsPsychFullscreen,
+            fullscreen_mode: true,
+            message: `<div class="message"><p>Please switch to full screen mode by pressing the button below!</p></div>`,
+            });
+
+        var cursor_off = {
+            type: jsPsychCallFunction,
+            func: function() {
+                document.body.style.cursor= "none";
+            }
+        }
+        timeline.push(cursor_off);
+
+        
+        //// Welcome message ////
+
+        var welcome = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `<div class="message">
+            <p> Welcome to the experiment.</p>
+            <p> Today, you are going to play a card game together with a virtual partner.</p>
+            <p> You will start with a self-paced instruction phase in which the game is explained.</p>
+            <br>
+            <p>Press space to begin. </p>
+            </div>
+            `,
+            choices: [' '],
+            data: {
+                expPhase: 'welcome',
+                trialInfo: 'welcome'
+            }
+        }; 
+
+        timeline.push(welcome);
+
+        ///////////////////////////////////////////////////////
+        /// Instructions: Imitation Condition, Match Trials ///
+        ///////////////////////////////////////////////////////
+
+        /// start display 
+        var instructions_startDisplay = {
+            type:jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+                var card_1 = "<img src='Stimuli/backcard.png'/>";
+                var card_2 = "<img src='Stimuli/backcard.png'/>";
+                var card_3 = "<img src='Stimuli/backcard.png'/>";
+                var card_4 = "<img src='Stimuli/backcard.png'/>";
+
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row">Instructions</div>
+                        <div class="instructions">
+                            <div>
+                            <p> At the beginning of each round, both of you receive two playing cards face down. </p>
+                            <p> The two cards on the left belong to your partner.</p>
+                            <p> The two cards on the right belong to you. </p>
+                            <br>
+                            <p> Press space to continue.</p>
+                            </div>
+                        </div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row"></div>
+                    </div>`;
+                return html;
+            },
+            choices: [' '],
+            data: {
+                expPhase: 'instructions',
+                trialInfo: 'startDisplay'
+            }
+        };
+
+        /// Instruction Trial I
+
+        // leader display
+        var instructions_leaderDisplay_one = {
+            type:jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+                var card_1 = "<img src='Stimuli/2_of_clubs.png'/>";
+                var card_2 = "<img src='Stimuli/5_of_clubs.png'/>";
+                var card_3 = "<img src='Stimuli/backcard.png'/>";
+                var card_4 = "<img src='Stimuli/backcard.png'/>";
+                
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row">Instructions</div>
+                        <div class="instructions">
+                            <div>
+                            <p> First, the two cards of your partner are revealed. </p>
+                            <p> Your partner's task is to select either the <i>higher</i> or the <i>lower</i> of their cards.</p>
+                            <p> Your cards will be revealed as soon as your partner made a selection.</p>
+                            <br>
+                            <p> Press space to see an example.</p>
+                            </div>
+                        </div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row"></div>
+                    </div>`;
+                return html;
+            },
+            choices: [' '],
+            data: {
+                expPhase: 'instructions',
+                trialInfo: 'leaderDisplay'
+            }
+        };
+
+        // leader selection + follower display 
+        var instructions_followerDisplay_one = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+                var card_1 = "<img src='Stimuli/2_of_clubs.png'/>";
+                var card_2 = "<img src='Stimuli/5_of_clubs_choice.png'/>";
+                var card_3 = "<img src='Stimuli/4_of_clubs.png'/>";
+                var card_4 = "<img src='Stimuli/6_of_clubs.png'/>";
+
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row">Example 1</div>
+                        <div class="instructions">
+                            <div>
+                            <p> Your partner selected their higher card (red frame) and your cards got revealed.</p>
+                            <p> Now it's your turn to select one of your cards! <p>
+                            <p> <b>In all rounds, your task is to <i>match</i> the selection of your partner:</b><p>
+                            <p> As your partner selected their <i>higher</i> card, select your <i>higher</i> card too! <p>
+                            <p> Select the correct card for this round by pressing [c] or [m].</p>
+                            </div>
+                        </div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row">[c] for <<< card | [m] for >>> card</div>
+                    </div>`;
+                return html;
+            }, 
+            choices: ['m'],
+            data: {
+                expPhase: 'instructions',
+                trialInfo: 'followerDisplay'
+            },
+        };
+
+        // follower selection + feedback
+        var instructions_followerDisplay_one_feedback = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+                var card_1 = "<img src='Stimuli/2_of_clubs.png'/>";
+                var card_2 = "<img src='Stimuli/5_of_clubs_choice.png'/>";
+                var card_3 = "<img src='Stimuli/4_of_clubs.png'/>";
+                var card_4 = "<img src='Stimuli/6_of_clubs_choice.png'/>";
+
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row">Example 1</div>
+                        <div class="instructions">
+                            <div>
+                            <p> Correct!</p>
+                            <p> Your partner selected their <i>higher</i> card, so you had to select your <i>higher</i> card too. <p>
+                            <br>
+                            <p> Press space to see another example! <p>
+                            </div>
+                        </div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row">[c] for <<< card | [m] for >>> card</div>
+                    </div>`;
+                return html;
+            }, 
+            choices: [' '],
+            data: {
+                expPhase: 'instructions',
+                trialInfo: 'followerDisplay'
+            },
+            post_trial_gap: 500,
+        };
+
+        /// Instruction trial II
+        
+        // leader display
+        var instructions_leaderDisplay_two = {
+            type:jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+                var card_1 = "<img src='Stimuli/6_of_clubs.png'/>";
+                var card_2 = "<img src='Stimuli/9_of_clubs.png'/>";
+                var card_3 = "<img src='Stimuli/backcard.png'/>";
+                var card_4 = "<img src='Stimuli/backcard.png'/>";
+                
+
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row">Example 2</div>
+                        <div class="instructions">
+                            <div>
+                            <p> The two cards of your partner got revealed. </p>
+                            <p> Again, your partner's task is to select either the <i>higher</i> or the <i>lower</i> of their cards.</p>
+                            <p> Your cards will be revealed as soon as your partner made a selection.</p>
+                            <br>
+                            <p> Press space to see an example.</p>
+                            </div>
+                        </div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row"></div>
+                    </div>`;
+                return html;
+            },
+            choices: [' '],
+            data: {
+                expPhase: 'instructions',
+                trialInfo: 'leaderDisplay'
+            }
+        };
+
+        // leader selection + follower display 
+        var instructions_followerDisplay_two = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+                var card_1 = "<img src='Stimuli/6_of_clubs_choice.png'/>";
+                var card_2 = "<img src='Stimuli/9_of_clubs.png'/>";
+                var card_3 = "<img src='Stimuli/5_of_clubs.png'/>";
+                var card_4 = "<img src='Stimuli/7_of_clubs.png'/>";
+
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row">Example 2</div>
+                        <div class="instructions">
+                            <div>
+                            <p> In this example, your partner selected their lower card (red frame).</p>
+                            <p> Now it's your turn to select one of your cards! <p>
+                            <p> Remeber: <p>
+                            <p> <b>In all rounds, your task is to <i>match</i> the selection of your partner:</b> <p>
+                            <p> As your partner selected their <i>lower</i> card, select your <i>lower</i> card too! <p>
+                            <p> Select the correct card for this round by pressing [c] or [m].</p>
+                            </div>
+                        </div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row">[c] for <<< card | [m] for >>> card</div>
+                    </div>`;
+                return html;
+            }, 
+            choices: ['c'],
+            data: {
+                expPhase: 'instructions',
+                trialInfo: 'followerDisplay'
+            },
+        };
+
+        // follower selection + feedback
+        var instructions_followerDisplay_two_feedback = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+                var card_1 = "<img src='Stimuli/6_of_clubs_choice.png'/>";
+                var card_2 = "<img src='Stimuli/9_of_clubs.png'/>";
+                var card_3 = "<img src='Stimuli/5_of_clubs_choice.png'/>";
+                var card_4 = "<img src='Stimuli/7_of_clubs.png'/>";
+
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row">Example 2</div>
+                        <div class="instructions">
+                            <div>
+                            <p> Correct!</p>
+                            <p> Your partner selected their <i>lower</i> card, so you had to select your <i>lower</i> card too. <p>
+                            <br>
+                            <p> Press space to continue! <p>
+                            </div>
+                        </div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row">[c] for <<< card | [m] for >>> card</div>
+                    </div>`;
+                return html;
+            }, 
+            choices: [' '],
+            data: {
+                expPhase: 'instructions',
+                trialInfo: 'followerDisplay'
+            },
+            post_trial_gap: 500,
+        };
+
+        var instruction_procedure = {
+            timeline: [instructions_startDisplay, instructions_leaderDisplay_one, instructions_followerDisplay_one , instructions_followerDisplay_one_feedback, instructions_leaderDisplay_two, instructions_followerDisplay_two , instructions_followerDisplay_two_feedback]
+        };
+
+        ///////////////////////
+        /// Training trials ///
+        ///////////////////////
+
+        var initDisp_duaration = 1500
+        var LeaderChoiceTimeRange = 500
+        var LeaderChoiceTimeMin = 1000
+        var participantResponse_window = 2500
+        var participantChoiceDisp_duration = 500
+        var feedbackDisp_duration = 2000
+        var ITI_duration = 500
+
+        // Training message 
+        var train_message = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `<div class="message", style="text-align: left;">
+            <p> You will now continue with some training rounds that ressemble the actual game.</p> 
+            <p> <b>In all rounds, your task is to <i>match</i> the selection of your partner:</b> <p>
+            <p> If your partner selects their <i>higher</i> card, select your <i>higher</i> card too. <p>
+            <p> If your partner selects their <i>lower</i> card, select your <i>lower</i> card too. <p>
+            <p> <b>From now on, you will only have a short time window to make your selection! </b> <p> 
+            <p> <b>Select the correct card as quickly as you can by pressing [c] or [m].</b> <p>
+            <br>
+            <p> Press space to start.</p>
+            </div>
+            `,
+            choices: [' '], 
+            data: {
+                expPhase: 'training',
+                trialInfo: 'instructions'
+            }
+        };
+
+        // define start trial
+        var train_start = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+                var card_1 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+                var card_2 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+                var card_3 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+                var card_4 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row">Press space to start new round!</div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row">[c] for <<< card | [m] for >>> card</div>
+                    </div>`;
+                return html;
+            },
+            choices: [' '],
+            data: {
+                expPhase: 'training',
+                trialInfo: 'startDisplay'
+            }
+        };
+
+        // define init display trial
+        var train_initDisp = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+                var card_1 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+                var card_2 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+                var card_3 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+                var card_4 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row"></div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row">[c] for <<< card | [m] for >>> card</div>
+                    </div>`;
+                return html;
+            },
+            choices: "NO_KEYS",
+            trial_duration: initDisp_duaration,
+            data: {
+                expPhase: 'training',
+                trialInfo: 'startDisplay'
+            }
+        };
+
+        // define leader display trial
+        var train_leaderDisp = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+                var card_1 = "<img src='" + jsPsych.timelineVariable('LeaderCard_1') + "'/>";
+                var card_2 = "<img src='" + jsPsych.timelineVariable('LeaderCard_2') + "'/>";
+                var card_3 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+                var card_4 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+
+
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row"></div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row">[c] for <<< card | [m] for >>> card</div>
+                    </div>`;
+                return html;
+            },
+            choices: "NO_KEYS",
+            trial_duration: function() {
+                var LeaderChoiceTime = Math.floor(Math.random() * LeaderChoiceTimeRange) + LeaderChoiceTimeMin;
+                return LeaderChoiceTime;
+            },
+            response_ends_trial: false,
+            data: {
+                expPhase: 'training',
+                trialInfo: 'leaderDisplay'
+            }, 
+            on_start: function(test_leaderDisp){
+                test_leaderDisp.data.leaderRT = test_leaderDisp.trial_duration;
+            }
+        };
+
+        // init trial counter
+        var trainTrials_counter = 0;
+
+        // define leader choice / follower display trial
+        var train_followerResponse = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+                if (jsPsych.timelineVariable('LeaderChoice') == jsPsych.timelineVariable('LeaderCard_1')) {
+                    var card_1 = "<img src='" + jsPsych.timelineVariable('LeaderCard_choice') + "'/>";
+                    var card_2 = "<img src='" + jsPsych.timelineVariable('LeaderCard_2') + "'/>";
+                    var card_3 = "<img src='" + jsPsych.timelineVariable('FollowerCard_1') + "'/>";
+                    var card_4 = "<img src='" + jsPsych.timelineVariable('FollowerCard_2') + "'/>";
+                } else if (jsPsych.timelineVariable('LeaderChoice') == jsPsych.timelineVariable('LeaderCard_2')){
+                    var card_1 = "<img src='" + jsPsych.timelineVariable('LeaderCard_1') + "'/>";
+                    var card_2 = "<img src='" + jsPsych.timelineVariable('LeaderCard_choice') + "'/>";
+                    var card_3 = "<img src='" + jsPsych.timelineVariable('FollowerCard_1') + "'/>";
+                    var card_4 = "<img src='" + jsPsych.timelineVariable('FollowerCard_2') + "'/>";
+                }
+
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row"></div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row">[c] for <<< card | [m] for >>> card</div>
+                    </div>`;
+                return html;
+            },
+            choices: ['c', 'm'],
+            trial_duration: participantResponse_window,
+            data: function(){
+                var LeaderChoiceTime = jsPsych.data.getLastTrialData().values()[0].leaderRT
+                trainTrials_counter++;
+                return {
+                    expPhase: 'training',
+                    trialInfo: 'followerResponse',
+                    trialN: trainTrials_counter,
+                    trialCond: jsPsych.timelineVariable('TrialCondition'),
+                    spatialRespCongr: jsPsych.timelineVariable('SpatialCongruency'),
+                    leaderCardL: jsPsych.timelineVariable('LeaderCard_1'),
+                    leaderCardR: jsPsych.timelineVariable('LeaderCard_2'),
+                    leaderCardC: jsPsych.timelineVariable('LeaderChoice'),
+                    leaderRT: LeaderChoiceTime,
+                    LeaderGoal: jsPsych.timelineVariable('LeaderGoal'),
+                    participantCardL: jsPsych.timelineVariable('FollowerCard_1'),
+                    partcipantCardR: jsPsych.timelineVariable('FollowerCard_2'),
+                    correctResponseCard: jsPsych.timelineVariable('CorrectResponse'),
+                    correctResponseKey: jsPsych.timelineVariable('CorrectResponseKey'),
+                    CorrectGoal: jsPsych.timelineVariable('CorrectGoal'),
+                    jointSequence: jsPsych.timelineVariable('Sequence'),
+                }
+            },
+            on_finish: function(data) {
+                if (data.response == data.correctResponseKey) {
+                    data.ResponseCorrect = "true"
+                } else if (data.response == null) {
+                    data.ResponseCorrect = "missing"
+                } else {
+                    data.ResponseCorrect = "false"
+                }
+            }
+        };
+
+        // define follower choice trial
+        var train_followerChoice = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+                var follower_choice = jsPsych.data.getLastTrialData().values()[0].response
+
+                if (jsPsych.timelineVariable('LeaderChoice') == jsPsych.timelineVariable('LeaderCard_1')) {
+                    var card_1 = "<img src='" + jsPsych.timelineVariable('LeaderCard_choice') + "'/>";
+                    var card_2 = "<img src='" + jsPsych.timelineVariable('LeaderCard_2') + "'/>";
+                } else if (jsPsych.timelineVariable('LeaderChoice') == jsPsych.timelineVariable('LeaderCard_2')){
+                    var card_1 = "<img src='" + jsPsych.timelineVariable('LeaderCard_1') + "'/>";
+                    var card_2 = "<img src='" + jsPsych.timelineVariable('LeaderCard_choice') + "'/>";
+                }
+                if (follower_choice == "c") {
+                    var card_3 = "<img src='" + jsPsych.timelineVariable('FollowerChoiceLeft') + "'/>";
+                    var card_4 = "<img src='" + jsPsych.timelineVariable('FollowerCard_2') + "'/>";
+                    
+                } else if (follower_choice == "m"){
+                    var card_3 = "<img src='" + jsPsych.timelineVariable('FollowerCard_1') + "'/>";
+                    var card_4 = "<img src='" + jsPsych.timelineVariable('FollowerChoiceRight') + "'/>";
+                    
+                } else if (follower_choice == null){
+                    var card_3 = "<img src='" + jsPsych.timelineVariable('FollowerCard_1') + "'/>";
+                    var card_4 = "<img src='" + jsPsych.timelineVariable('FollowerCard_2') + "'/>";
+                }
+
+
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row"></div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row">[c] for <<< card | [m] for >>> card</div>
+                    </div>`;
+                return html;
+
+            },
+            choices: "NO_KEYS",
+            trial_duration: participantChoiceDisp_duration ,
+            data: function(){
+                return {
+                    expPhase: 'training',
+                    trialInfo: 'followerSelectionDisplay',
+                    responseKey: jsPsych.data.getLastTrialData().values()[0].response,
+                    ResponseCorrect: jsPsych.data.getLastTrialData().values()[0].ResponseCorrect}
+            }
+        };
+
+        // define feedback trial
+        var train_feedback = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+
+                if (jsPsych.timelineVariable('LeaderChoice') == jsPsych.timelineVariable('LeaderCard_1')) {
+                    var card_1 = "<img src='" + jsPsych.timelineVariable('LeaderCard_choice') + "'/>";
+                    var card_2 = "<img src='" + jsPsych.timelineVariable('LeaderCard_2') + "'/>";
+                } else if (jsPsych.timelineVariable('LeaderChoice') == jsPsych.timelineVariable('LeaderCard_2')){
+                    var card_1 = "<img src='" + jsPsych.timelineVariable('LeaderCard_1') + "'/>";
+                    var card_2 = "<img src='" + jsPsych.timelineVariable('LeaderCard_choice') + "'/>";
+                }
+
+                if (jsPsych.data.getLastTrialData().values()[0].responseKey == "c") {
+                    var card_3 = "<img src='" + jsPsych.timelineVariable('FollowerChoiceLeft') + "'/>";
+                    var card_4 = "<img src='" + jsPsych.timelineVariable('FollowerCard_2') + "'/>";
+                } else if (jsPsych.data.getLastTrialData().values()[0].responseKey == "m"){
+                    var card_3 = "<img src='" + jsPsych.timelineVariable('FollowerCard_1') + "'/>";
+                    var card_4 = "<img src='" + jsPsych.timelineVariable('FollowerChoiceRight') + "'/>";
+                } else if (jsPsych.data.getLastTrialData().values()[0].responseKey == null) {
+                    var card_3 = "<img src='" + jsPsych.timelineVariable('FollowerCard_1') + "'/>";
+                    var card_4 = "<img src='" + jsPsych.timelineVariable('FollowerCard_2') + "'/>";
+                }
+
+
+                if (jsPsych.data.getLastTrialData().values()[0].ResponseCorrect == "true") {
+                    var feedback = `<p><span style='color:white'>Correct!</span></p>`
+                } else if (jsPsych.data.getLastTrialData().values()[0].ResponseCorrect == "false"){
+                    var feedback = `<p><span style='color:red'>Error!</span></p>`
+                } else if (jsPsych.data.getLastTrialData().values()[0].ResponseCorrect == "missing"){
+                    var feedback = `<p><span style='color:red'>Too slow!</span></p>`
+                }
+
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row"></div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="feedback">${feedback}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row">[c] for <<< card | [m] for >>> card</div>
+                    </div>`;
+                return html;
+
+                //return feedback;
+            },
+            choices: "NO_KEYS",
+            trial_duration: feedbackDisp_duration,
+            post_trial_gap: ITI_duration,
+            data: {
+                expPhase: 'training',
+                trialInfo: 'trialFeedback'
+            }
+        };
+
+        /// Define training procedures
+
+        // Match training
+        var train_procedure = {
+            timeline: [train_start,train_initDisp, train_leaderDisp, train_followerResponse, train_followerChoice, train_feedback],
+            timeline_variables: match_trials_blocked_info,
+            sample: {
+                type: 'custom',
+                fn: function(t){
+                    var MatchConDownTrials = [0,1,2,3,4,5,6,7,8,9,10,11]; // match con down
+                    var MatchInconDownTrials = [12,13,14,15,16,17,18,19,20,21,22,23]; // match incon down
+                    var MatchConUpTrials = [24,25,26,27,28,29,30,31,32,33,34,35]; // match con up
+                    var MatchInconUpTrials = [36,37,38,39,40,41,42,43,44,45,46,47]; // match incon up
+
+                    var MatchConUpSample = jsPsych.randomization.sampleWithoutReplacement(MatchConUpTrials, 2);
+                    var MatchConDownSample = jsPsych.randomization.sampleWithoutReplacement(MatchConDownTrials, 2);
+                    var MatchInconUpSample = jsPsych.randomization.sampleWithoutReplacement(MatchInconUpTrials, 2);
+                    var MatchInconDownSample = jsPsych.randomization.sampleWithoutReplacement(MatchInconDownTrials, 2);
+
+                    var training_trials_sample_match = MatchConUpSample.concat(MatchConDownSample,MatchInconUpSample,MatchInconDownSample);
+
+                    var training_trials_randomSample_match = jsPsych.randomization.shuffle(training_trials_sample_match)
+
+                    return training_trials_randomSample_match;
+                }
+            }
+        };
+
+        // Training debrief
+        var train_debrief = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function() {
+                
+                var trainTrials = jsPsych.data.get().filter({expPhase: 'training'});
+                var matchTrainTrials = trainTrials.filter({trialCond: 'Match'});
+                var trials = matchTrainTrials.filter({trialInfo: 'followerResponse'});
+                var correct_trials = trials.filter({ResponseCorrect: "true" });
+                var trialsCount = trials.count();
+                var correct_trialsCount = correct_trials.count();
+
+                return `<div class="message">
+                <p> End of training! <p>
+                <p> You responded correctly in ${correct_trialsCount} out of ${trialsCount} rounds.</p>
+                <br>
+                <p>Press space to start the game!</p>
+                </div>`;
+            },
+            data: {
+                expPhase: 'training',
+                trialInfo: 'debrief'
+            },
+            on_finish: function(){
+                var trainTrials = jsPsych.data.get().filter({expPhase: 'training'});
+                var matchTrainTrials = trainTrials.filter({trialCond: 'Match'});
+                var trials = matchTrainTrials.filter({trialInfo: 'followerResponse'});
+                var correct_trials = trials.filter({ResponseCorrect: "true" });
+                var correct_trialsCount = correct_trials.count();
+
+                if(correct_trialsCount <= 4){
+                    jsPsych.data.addProperties({
+                        trainingFail: true
+                    });
+                    jsPsych.endExperiment( `<div class="message">
+                    <p> The experiment was ended because your training score was not high enough to continue.</p>
+                    <br>
+                    <p> Thank you very much for participating! </p>
+                    <p> Please return your submission on Prolific. You will be granted with partial compensation for your time spent on the study.</p>
+                    <br>
+                    <p><a href="https://app.prolific.co/submissions/complete?cc=CQ19MOJP">Click here to return to Prolific and complete the study</a>.</p>
+                    </div>`);
+                }
+            }
+        };
+
+        ///////////////////
+        /// Test trials ///
+        ///////////////////
+
+        // test trials instrucion message
+        var test_message = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `<div class="message", style="text-align: left;">
+            <p> You will now start the actual game.</p> 
+            <p> Remember: <p>
+            <p> <b>In all rounds, your task is to <i>match</i> the selection of your partner:</b> <p>
+            <p> If your partner selects their <i>higher</i> card, select your <i>higher</i> card too. <p>
+            <p> If your partner selects their <i>lower</i> card, select your <i>lower</i> card too. <p>
+            <p> <b>As before, you will only have a short time window to make your selection! </b> <p> 
+            <p> <b>Select the correct card as quickly as you can by pressing [c] or [m].</b> <p> 
+            <br>
+            <p> Press space to start.</p>
+            </div>
+            `,
+            choices: [' '], 
+            data: {
+                expPhase: 'test',
+                trialInfo: 'instructions'
+            }, 
+        };
+
+        // init trial counter
+        var testTrials_counter = 0;
+
+        // define start trial
+        var test_start = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+                var card_1 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+                var card_2 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+                var card_3 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+                var card_4 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+
+                var trialN = testTrials_counter + 1
+
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row">Press space to start new round! ${trialN}/48</div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row">[c] for <<< card | [m] for >>> card</div>
+                    </div>`;
+                return html;
+            },
+            choices: [' '],
+            data: {
+                expPhase: 'test',
+                trialInfo: 'startDisplay'
+            }
+        };
+
+        // define init display trial
+        var test_initDisp = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+                var card_1 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+                var card_2 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+                var card_3 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+                var card_4 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row"></div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row">[c] for <<< card | [m] for >>> card</div>
+                    </div>`;
+                return html;
+            },
+            choices: "NO_KEYS",
+            trial_duration: initDisp_duaration,
+            data: {
+                expPhase: 'test',
+                trialInfo: 'startDisplay'
+            }
+        };
+
+        // define leader display trial
+        var test_leaderDisp = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+                var card_1 = "<img src='" + jsPsych.timelineVariable('LeaderCard_1') + "'/>";
+                var card_2 = "<img src='" + jsPsych.timelineVariable('LeaderCard_2') + "'/>";
+                var card_3 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+                var card_4 = "<img src='" + jsPsych.timelineVariable('BackCard') + "'/>";
+
+
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row"></div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row">[c] for <<< card | [m] for >>> card</div>
+                    </div>`;
+                return html;
+            },
+            choices: "NO_KEYS",
+            trial_duration: function() {
+                var LeaderChoiceTime = Math.floor(Math.random() * LeaderChoiceTimeRange) + LeaderChoiceTimeMin;
+                return LeaderChoiceTime;
+            },
+            response_ends_trial: false,
+            data: {
+                expPhase: 'test',
+                trialInfo: 'leaderDisplay'
+            }, 
+            on_start: function(test_leaderDisp){
+                test_leaderDisp.data.leaderRT = test_leaderDisp.trial_duration;
+            }
+        };
+
+        // define leader choice / follower display trial
+        var test_followerResponse = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+                if (jsPsych.timelineVariable('LeaderChoice') == jsPsych.timelineVariable('LeaderCard_1')) {
+                    var card_1 = "<img src='" + jsPsych.timelineVariable('LeaderCard_choice') + "'/>";
+                    var card_2 = "<img src='" + jsPsych.timelineVariable('LeaderCard_2') + "'/>";
+                    var card_3 = "<img src='" + jsPsych.timelineVariable('FollowerCard_1') + "'/>";
+                    var card_4 = "<img src='" + jsPsych.timelineVariable('FollowerCard_2') + "'/>";
+                } else if (jsPsych.timelineVariable('LeaderChoice') == jsPsych.timelineVariable('LeaderCard_2')){
+                    var card_1 = "<img src='" + jsPsych.timelineVariable('LeaderCard_1') + "'/>";
+                    var card_2 = "<img src='" + jsPsych.timelineVariable('LeaderCard_choice') + "'/>";
+                    var card_3 = "<img src='" + jsPsych.timelineVariable('FollowerCard_1') + "'/>";
+                    var card_4 = "<img src='" + jsPsych.timelineVariable('FollowerCard_2') + "'/>";
+                }
+
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row"></div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row">[c] for <<< card | [m] for >>> card</div>
+                    </div>`;
+                return html;
+            },
+            choices: ['c', 'm'],
+            trial_duration: participantResponse_window,
+            data: function(){
+                var LeaderChoiceTime = jsPsych.data.getLastTrialData().values()[0].leaderRT
+                testTrials_counter++;
+                return {
+                    expPhase: 'test',
+                    trialInfo: 'followerResponse',
+                    trialN: testTrials_counter,
+                    trialCond: jsPsych.timelineVariable('TrialCondition'),
+                    spatialRespCongr: jsPsych.timelineVariable('SpatialCongruency'),
+                    leaderCardL: jsPsych.timelineVariable('LeaderCard_1'),
+                    leaderCardR: jsPsych.timelineVariable('LeaderCard_2'),
+                    leaderCardC: jsPsych.timelineVariable('LeaderChoice'),
+                    leaderRT: LeaderChoiceTime,
+                    LeaderGoal: jsPsych.timelineVariable('LeaderGoal'),
+                    participantCardL: jsPsych.timelineVariable('FollowerCard_1'),
+                    partcipantCardR: jsPsych.timelineVariable('FollowerCard_2'),
+                    correctResponseCard: jsPsych.timelineVariable('CorrectResponse'),
+                    correctResponseKey: jsPsych.timelineVariable('CorrectResponseKey'),
+                    CorrectGoal: jsPsych.timelineVariable('CorrectGoal'),
+                    jointSequence: jsPsych.timelineVariable('Sequence'),
+                }
+            },
+            on_finish: function(data) {
+                if (data.response == data.correctResponseKey) {
+                    data.ResponseCorrect = "true"
+                } else if (data.response == null) {
+                    data.ResponseCorrect = "missing"
+                } else {
+                    data.ResponseCorrect = "false"
+                }
+            }
+        };
+
+        // define follower choice trial
+
+        var test_followerChoice = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+                var follower_choice = jsPsych.data.getLastTrialData().values()[0].response
+
+                if (jsPsych.timelineVariable('LeaderChoice') == jsPsych.timelineVariable('LeaderCard_1')) {
+                    var card_1 = "<img src='" + jsPsych.timelineVariable('LeaderCard_choice') + "'/>";
+                    var card_2 = "<img src='" + jsPsych.timelineVariable('LeaderCard_2') + "'/>";
+                } else if (jsPsych.timelineVariable('LeaderChoice') == jsPsych.timelineVariable('LeaderCard_2')){
+                    var card_1 = "<img src='" + jsPsych.timelineVariable('LeaderCard_1') + "'/>";
+                    var card_2 = "<img src='" + jsPsych.timelineVariable('LeaderCard_choice') + "'/>";
+                }
+                if (follower_choice == "c") {
+                    var card_3 = "<img src='" + jsPsych.timelineVariable('FollowerChoiceLeft') + "'/>";
+                    var card_4 = "<img src='" + jsPsych.timelineVariable('FollowerCard_2') + "'/>";
+        
+                } else if (follower_choice == "m"){
+                    var card_3 = "<img src='" + jsPsych.timelineVariable('FollowerCard_1') + "'/>";
+                    var card_4 = "<img src='" + jsPsych.timelineVariable('FollowerChoiceRight') + "'/>";
+                    
+                } else if (follower_choice == null){
+                    var card_3 = "<img src='" + jsPsych.timelineVariable('FollowerCard_1') + "'/>";
+                    var card_4 = "<img src='" + jsPsych.timelineVariable('FollowerCard_2') + "'/>";
+                }
+
+
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row"></div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row">[c] for <<< card | [m] for >>> card</div>
+                    </div>`;
+                return html;
+
+            },
+            choices: "NO_KEYS",
+            trial_duration: participantChoiceDisp_duration,
+            data: function(){
+                return {
+                    expPhase: 'test',
+                    trialInfo: 'followerSelectionDisplay',
+                    responseKey: jsPsych.data.getLastTrialData().values()[0].response,
+                    ResponseCorrect: jsPsych.data.getLastTrialData().values()[0].ResponseCorrect}
+            }
+        };
+
+        // define feedback trial
+
+        var test_feedback = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+
+                if (jsPsych.timelineVariable('LeaderChoice') == jsPsych.timelineVariable('LeaderCard_1')) {
+                    var card_1 = "<img src='" + jsPsych.timelineVariable('LeaderCard_choice') + "'/>";
+                    var card_2 = "<img src='" + jsPsych.timelineVariable('LeaderCard_2') + "'/>";
+                } else if (jsPsych.timelineVariable('LeaderChoice') == jsPsych.timelineVariable('LeaderCard_2')){
+                    var card_1 = "<img src='" + jsPsych.timelineVariable('LeaderCard_1') + "'/>";
+                    var card_2 = "<img src='" + jsPsych.timelineVariable('LeaderCard_choice') + "'/>";
+                }
+
+                if (jsPsych.data.getLastTrialData().values()[0].responseKey == "c") {
+                    var card_3 = "<img src='" + jsPsych.timelineVariable('FollowerChoiceLeft') + "'/>";
+                    var card_4 = "<img src='" + jsPsych.timelineVariable('FollowerCard_2') + "'/>";
+                } else if (jsPsych.data.getLastTrialData().values()[0].responseKey == "m"){
+                    var card_3 = "<img src='" + jsPsych.timelineVariable('FollowerCard_1') + "'/>";
+                    var card_4 = "<img src='" + jsPsych.timelineVariable('FollowerChoiceRight') + "'/>";
+                } else if (jsPsych.data.getLastTrialData().values()[0].responseKey == null) {
+                    var card_3 = "<img src='" + jsPsych.timelineVariable('FollowerCard_1') + "'/>";
+                    var card_4 = "<img src='" + jsPsych.timelineVariable('FollowerCard_2') + "'/>";
+                }
+
+
+                if (jsPsych.data.getLastTrialData().values()[0].ResponseCorrect == "true") {
+                    var feedback = `<p><span style='color:white'>Correct!</span></p>`
+                } else if (jsPsych.data.getLastTrialData().values()[0].ResponseCorrect == "false"){
+                    var feedback = `<p><span style='color:red'>Error!</span></p>`
+                } else if (jsPsych.data.getLastTrialData().values()[0].ResponseCorrect == "missing"){
+                    var feedback = `<p><span style='color:red'>Too slow!</span></p>`
+                }
+
+                var html = `
+                    <div class="trial_grid">
+                        <div class="header_row"></div>
+                        <div class="person_left">PARTNER</div>
+                        <div class="card_one">${card_1}</div>
+                        <div class="card_two">${card_2}</div>
+                        <div class="feedback">${feedback}</div>
+                        <div class="card_three">${card_3}</div>
+                        <div class="card_four">${card_4}</div>
+                        <div class="person_right">YOU</div>
+                        <div class="last_row">[c] for <<< card | [m] for >>> card</div>
+                    </div>`;
+                return html;
+
+            },
+            choices: "NO_KEYS",
+            trial_duration: feedbackDisp_duration,
+            post_trial_gap: ITI_duration,
+            data: {
+                expPhase: 'test',
+                trialInfo: 'trialFeedback'
+            }
+        };
+
+        /// define test procedure
+
+        var test_procedure = {
+            timeline: [test_start,test_initDisp, test_leaderDisp, test_followerResponse, test_followerChoice, test_feedback],
+            timeline_variables: match_trials_blocked_info,
+            randomize_order: true,
+        };
+
+        // Exit fullscreen and show mouse 
+        var exit_fullscreen = {
+            type: jsPsychFullscreen,
+            fullscreen_mode: false,
+            delay_after: 0
+        }
+        var cursor_on = {
+            type: jsPsychCallFunction,
+            func: function() {
+                document.body.style.cursor= "default";
+            }
+        }
+
+        // final debrief message
+        var finalDebrief_message = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function(){
+
+                var testTrials = jsPsych.data.get().filter({expPhase: 'test'});
+                var trials = testTrials.filter({trialInfo: 'followerResponse'});
+                var correct_trials = trials.filter({ResponseCorrect: "true" });
+                var correct_trialsCount = correct_trials.count();
+
+                return `<div class="message">
+                <p> End of game!<p>
+                <p> You responded correctly in ${correct_trialsCount} out of 48 rounds. <p> 
+                <br>
+                <p> You have reached the end of the experiment. </p>
+                <br>
+                <p> Press space to end the experiment and to receive your completion code.</p>
+                </div>`;
+            },
+            choices: [' '], 
+            data: {
+                expPhase: 'end',
+                trialInfo: 'instructions'
+            }
+        }
+
+        ////////////////////////////
+        /// Create final timline ///
+        ////////////////////////////
+
+        var full_procedure = {
+            timeline:[instruction_procedure, train_message, train_procedure, train_debrief, test_message, test_procedure, exit_fullscreen, cursor_on, finalDebrief_message]
+        }
+        timeline.push(full_procedure);
+
+        // finish connection with pavlovia.org
+        var pavlovia_finish = {
+            type: jsPsychPavlovia,
+            command: "finish",
+            participantId: subject_id,
+            completedCallback: function() {
+                window.location.replace('https://app.prolific.co/submissions/complete?cc=C1KV7MVB');
+            }
+        };
+        timeline.push(pavlovia_finish);
+
+        ////////////////////////////////// Run Experiment /////////////////////////////////////////////////////////////////
+
+        jsPsych.run(timeline);
+
+    </script>
+
+</html>
